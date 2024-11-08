@@ -1,0 +1,146 @@
+//Kahn Herd Immunity
+import java.util.Scanner;
+
+public class KahnProjFour {
+    public static void main(String[] args) {
+        Scanner in = new Scanner(System.in);
+        System.out.println("What percentage of the population should be vaccinated? %");
+        double vaxPercentage = in.nextDouble() / 100.0;
+        System.out.println("What size grid?");
+        int size = in.nextInt();
+        System.out.println("How many days should the simulation run for?");
+        int days = in.nextInt();
+
+        double rand;
+
+        boolean[][] vaccinated = new boolean[size][size];
+        boolean[][] infected = new boolean[size][size];
+
+        // Initialize the vaccinated array and randomly vaccinate cells based on vaxPercentage
+        initializeVaccinatedArray(vaccinated, vaxPercentage);
+
+        // Initialize the infected arrays and set a random cell, "patient zero," to be infected
+        initializeInfectedArray(infected);
+
+        // Run the simulation for the specified number of days
+        for (int day = 0; day < days; day++) {
+            // Create a new copy of the infected array to represent infections on the next day
+            boolean[][] nextDayInfected = copyArr(infected);
+            // Iterate through each cell in the grid
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size; j++) {
+                    // If the cell is uninfected, check all neighbors, count infections,
+                    // and determine whether the uninfected cell should become infected
+                    if (!infected[i][j]) {
+                        int n = countInfectedNeighbors(infected, i, j);
+                        double infectionProbability = calculateInfectionProbability(vaccinated[i][j], n);
+
+                        // Check if the cell becomes infected on the next day
+                        if (Math.random() < infectionProbability) {
+                            nextDayInfected[i][j] = true;
+                        }
+                    }
+                }
+            }
+
+            // Update current day with copy
+            infected = copyArr(nextDayInfected);
+        }
+
+        // Calculate the total percentage of the population that is infected
+        double totalInfectedPercentage = calculateTotalInfectedPercentage(infected, size);
+
+        System.out.println("After " + days + " days " + totalInfectedPercentage + "% of the population was infected");
+    }
+// Methods used in code defined here
+    public static void initializeVaccinatedArray(boolean[][] vaccinated, double vaxPercentage) {
+        for (int i = 0; i < vaccinated.length; i++) {
+            for (int j = 0; j < vaccinated[i].length; j++) {
+                vaccinated[i][j] = Math.random() < vaxPercentage;
+            }
+        }
+    }
+
+    // Initialize the infected array with one random infected cell
+    public static void initializeInfectedArray(boolean[][] infected) {
+        int randomRow = (int) (Math.random() * infected.length);
+        int randomCol = (int) (Math.random() * infected[randomRow].length);
+        infected[randomRow][randomCol] = true;
+    }
+
+    // Calculate the probability of infection based on vaccination status and the number of infected neighbors
+    public static double calculateInfectionProbability(boolean isVaccinated, int numInfectedNeighbors) {
+        if (isVaccinated) {
+        	
+            if (numInfectedNeighbors == 1) {
+                return 0.025; 
+                
+            } else if (numInfectedNeighbors == 2) {
+                return 0.075; 
+                
+            } else if (numInfectedNeighbors == 3){
+                return 0.10; 
+            }
+        } else {
+        	
+            if (numInfectedNeighbors == 1) {
+                return 0.75; 
+                
+            } else if (numInfectedNeighbors == 2) {
+                return 0.85; 
+                
+            } else if (numInfectedNeighbors == 3){
+                return 0.95; 
+            }
+        }
+		return 0;
+    }
+
+    // Copy the given 2D boolean array
+    public static boolean[][] copyArr(boolean[][] copy) {
+        boolean[][] newArr = new boolean[copy.length][copy[0].length];
+        for (int i = 0; i < copy.length; i++) {
+            for (int j = 0; j < copy[i].length; j++) {
+                newArr[i][j] = copy[i][j];
+            }
+        }
+        return newArr;
+    }
+    
+    public static double calculateTotalInfectedPercentage(boolean[][] infected, int size) {
+        int totalInfected = 0;
+
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (infected[i][j]) {
+                    totalInfected++;
+                }
+            }
+        }
+
+        return ((double) totalInfected / (size * size)) * 100.0;
+    }
+    
+ // Count the number of infected neighbors for a given cell
+    public static int countInfectedNeighbors(boolean[][] infected, int row, int col) {
+        int count = 0;
+
+        // Positions of neighbors to central cell being looked at
+        int[] rangeX = {-1, -1, -1, 0, 0, 1, 1, 1};
+        int[] rangeY = {-1, 0, 1, -1, 1, -1, 0, 1};
+
+        for (int k = 0; k < rangeX.length; k++) {
+            int newRow = row + rangeX[k];
+            int newCol = col + rangeY[k];
+
+            // Check if the neighbor is within bounds and infected
+            if (newRow >= 0 && newRow < infected.length && newCol >= 0 && newCol < infected[newRow].length) {
+                if (infected[newRow][newCol]) {
+                    count++;
+                }
+            }
+        }
+
+        return count;
+    }
+}
